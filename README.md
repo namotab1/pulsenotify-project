@@ -227,6 +227,19 @@ Import `PulseNotify.postman_collection.json`. It contains all 13 required scenar
 - Scenario 12 needs `adminuser` to have been promoted to admin once (see "Creating an admin user").
 - Scenario 13 is a database check. After the alert from scenario 6 has been processed by Celery, confirm a row exists in `pulse_notificationlog` using the SQL in the "Seeing it work end to end" section.
 
+
+## Evidence: Celery pipeline
+
+After the DEL-BOM alert was created, Celery Beat picked it up, the worker ran `send_notification`, and the database shows the result.
+
+**NotificationLog rows:**
+![NotificationLog rows](screenshots/send_notification.png)
+
+**Alerts marked as triggered:**
+![PriceAlert statuses](screenshots/price_alert_triggered.png)
+
+
+
 ## Design decisions
 
 **1. Notifications are sent with `.delay()`, not called directly.** `check_prices` runs on a schedule and loops over every active route. If it waited for each notification to be written, one slow task would delay the whole scan. `.delay()` puts the work on the queue and returns immediately, so the scheduler stays fast and the notification work is spread across the worker.
